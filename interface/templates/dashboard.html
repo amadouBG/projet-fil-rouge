@@ -1,0 +1,105 @@
+{# interface/templates/dashboard.html #}
+{% extends "base.html" %}
+
+{% block page_content %}
+    {# Section pour afficher les messages flash (recommandé) #}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show mt-3" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="jumbotron bg-light p-5 rounded mt-4">
+        <h1>Analyser un Post Bluesky</h1>
+        <p class="lead">Entrez l'URL d'un post Bluesky pour récupérer ses informations et détecter sa nature (Vrai, Faux, Opinion personnelle).</p>
+        <hr class="my-4">
+
+        <form method="POST" action="" class="form" novalidate>
+            {{ form.csrf_token }}
+            <div class="form-row align-items-center">
+                <div class="col-sm-9 my-1">
+                    {{ form.bluesky_url.label(class="sr-only") }}
+                    {{ form.bluesky_url(
+                        class="form-control form-control-lg" + (" is-invalid" if form.bluesky_url.errors else ""),
+                        placeholder=form.bluesky_url.render_kw.placeholder
+                        ) }}
+                    {% for error in form.bluesky_url.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <div class="col-auto my-1">
+                    {{ form.submit(class="btn btn-success btn-lg") }}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <hr>
+
+    <h2>Résultats</h2>
+    
+    {% if tweet_obj %}
+        <div class="card tweet-card shadow-sm mb-3">
+            <div class="card-header">
+                <strong>Information du Post</strong>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">
+                    {{ tweet_obj.author.display_name }}
+                    <small class="text-muted">(<a href="https://bsky.app/profile/{{ tweet_obj.author.handle }}" target="_blank">@{{ tweet_obj.author.handle }}</a>)</small>
+                </h5>
+                <p><strong>URL / ID :</strong> <a href="{{ tweet_obj.bluesky_id | replace('at://', 'https://bsky.app/profile/') | replace('/app.bsky.feed.post/', '/post/') }}" target="_blank">{{ tweet_obj.bluesky_id }}</a></p>
+                <p><strong>Contenu :</strong></p>
+                <blockquote class="blockquote tweet-content border p-3 rounded bg-white">
+                    <p class="mb-0 tweet-text">{{ tweet_obj.content }}</p>
+                </blockquote>
+                <p class="card-text"><small class="text-muted">
+                    <strong>Langue :</strong> {{ tweet_obj.language if tweet_obj.language else 'Non détectée' }} |
+                    <strong>Posté le :</strong> {{ tweet_obj.posted_at.strftime('%d-%m-%Y %H:%M:%S') if tweet_obj.posted_at else 'Inconnue' }}
+                </small></p>
+            </div>
+        </div>
+
+        {% if detection_obj %}
+            {# On choisit une couleur pour l'alerte en fonction du label #}
+            {% set alert_class = 'alert-info' %}
+            {% if detection_obj.label == 'Vrai' %}
+                {% set alert_class = 'alert-success' %}
+            {% elif detection_obj.label == 'Faux' %}
+                {% set alert_class = 'alert-danger' %}
+            {% endif %}
+
+            <div class="alert {{ alert_class }} detection-result" role="alert">
+                <h4 class="alert-heading">Résultat de la Détection</h4>
+                <p>Le modèle a classifié ce post comme : <strong>{{ detection_obj.label }}</strong></p>
+                <hr>
+                <p class="mb-0">
+                    Probabilité de confiance : <strong>{{ "%.2f"|format(detection_obj.probability * 100) }}%</strong><br>
+                    <small>Modèle utilisé : {{ detection_obj.model_used }}</small>
+                </p>
+            </div>
+        {% else %}
+             <div class="alert alert-secondary detection-result" role="alert">
+                <h4 class="alert-heading">Statut de Détection</h4>
+                <p>La détection n'a pas pu être effectuée (le post était peut-être vide ou une erreur est survenue).</p>
+            </div>
+        {% endif %}
+
+    {% elif request.method == 'POST' %}
+         <div class="alert alert-warning mt-3" role="alert">
+            Aucun post n'a pu être récupéré avec l'URL fournie.
+        </div>
+    {% else %}
+        <div class="alert alert-secondary mt-3" role="alert">
+            Entrez une URL pour voir les résultats ici.
+        </div>
+    {% endif %}
+
+{% endblock %}

@@ -1,0 +1,78 @@
+{# interface/templates/tweets_table.html #}
+{% extends "base.html" %}
+
+{% block page_content %}
+    <h1 class="mt-4">{{ title }}</h1>
+    <hr>
+
+    {% if tweets %}
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-bordered">
+                <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Auteur</th>
+                        <th scope="col">Contenu (Extrait)</th>
+                        <th scope="col">Posté le</th>
+                        <th scope="col">Détection</th>
+                        <th scope="col">Taux de Correspondance</th>
+                        <th scope="col">Lien</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tweet in tweets %}
+                        <tr>
+                            <th scope="row">{{ loop.index }}</th>
+                            <td>
+                                {% if tweet.author %}
+                                    {{ tweet.author.display_name or tweet.author.handle }}<br>
+                                    <small class="text-muted">@{{ tweet.author.handle }}</small>
+                                {% else %}
+                                    <span class="text-danger">Auteur Inconnu</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {{ tweet.content[:80] }}{% if tweet.content|length > 80 %}...{% endif %}
+                            </td>
+                            <td>
+                                {{ tweet.posted_at.strftime('%d-%m-%Y %H:%M') if tweet.posted_at else 'Inconnue' }}
+                            </td>
+                            <td>
+                                {% if tweet.detections %}
+                                    {% set detection = tweet.detections[0] %}
+                                    {% set label_class = 'badge-secondary' %}
+                                    {% if detection.label == 'Vrai' %}{% set label_class = 'badge-success' %}
+                                    {% elif detection.label == 'Faux' %}{% set label_class = 'badge-danger' %}
+                                    {% elif detection.label == 'Opinion personnelle' %}{% set label_class = 'badge-info' %}
+                                    {% endif %}
+                                    <span class="badge badge-pill {{ label_class }}">{{ detection.label }}</span>
+                                {% else %}
+                                    <span class="badge badge-pill badge-secondary">Info non disponible</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if tweet.detections %}
+                                    {% set detection = tweet.detections[0] %}
+                                    <span class="badge badge-pill badge-light" style="font-size: 0.9em;">
+                                        {{ "%.1f"|format(detection.probability * 100) }}%
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-pill badge-secondary">Info non disponible</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {# --- CORRECTION APPLIQUÉE ICI --- #}
+                                {# La logique de remplacement a été corrigée pour générer une URL valide #}
+                                <a href="{{ tweet.bluesky_id | replace('at://', 'https://bsky.app/profile/') | replace('/app.bsky.feed.post/', '/post/') }}" target="_blank" class="btn btn-sm btn-info">Voir</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info mt-4">
+            Aucun tweet à afficher pour le moment.
+        </div>
+    {% endif %}
+{% endblock %}

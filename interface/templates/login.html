@@ -1,0 +1,38 @@
+{# interface/templates/login.html #}
+{% extends "base.html" %}
+
+{% block page_content %}
+    <div class="row mt-5"> {# Ajout marge en haut #}
+        <div class="col-md-6 offset-md-3">
+            <div class="card shadow-sm"> {# Ajout ombre légère #}
+                <div class="card-header bg-dark text-white"> {# Header stylé #}
+                    <h2 class="card-title text-center mb-0">Connexion</h2> {# h2 et mb-0 #}
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="" novalidate>
+                        {{ form.csrf_token }}
+
+                        <div class="form-group">
+                            {{ form.username.label }}
+                            {# Ajout de is-invalid si erreur #}
+                            {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                            {% for error in form.username.errors %}
+                                <div class="invalid-feedback">{{ error }}</div> {# Message d'erreur Bootstrap #}
+                            {% endfor %}
+                        </div>
+
+                        <div class="form-group">
+                            {{ form.password.label }}
+                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
+                            {% for error in form.password.errors %}
+                                <div class="invalid-feedback">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        {{ form.submit(class="btn btn-primary btn-lg btn-block mt-4") }} {# btn-lg, btn-block, marge #}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

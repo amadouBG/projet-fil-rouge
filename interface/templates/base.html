@@ -1,0 +1,81 @@
+{# interface/templates/base.html #}
+{% extends "bootstrap/base.html" %}
+{# On n'importe PLUS wtf.html #}
+
+{% block title %}
+    {% if title %}{{ title }} - {% endif %}Thumalien FakeNews Detector
+{% endblock %}
+
+{% block styles %}
+    {{ super() }} {# Conserve les styles de Bootstrap #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body { padding-top: 70px; }
+        .tweet-card, .detection-result { margin-top: 20px; }
+        blockquote { font-size: 1rem; }
+        /* --- AJOUTER CETTE RÈGLE --- */
+        .tweet-text {
+            white-space: pre-wrap; /* Conserve les sauts de ligne et espaces */
+            word-wrap: break-word; /* Coupe les mots longs si besoin */
+        }
+        /* --- FIN AJOUT --- */
+        .flashes { list-style: none; padding-left: 0; }
+        .form-group { margin-bottom: 1rem; } /* Espace pour les formulaires manuels */
+        .form-inline .form-group { margin-right: 0.5rem; }
+    </style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('main.dashboard') }}">ReVeal</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+         <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                {% if current_user.is_authenticated %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.all_tweets') }}">Tous les Tweets</a></li> {# <--- AJOUT #}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.my_tweets') }}">Mes Tweets</a></li> {# <--- AJOUT #}
+                    <li class="nav-item">
+                        <span class="navbar-text text-white mr-3">
+                            Bienvenue, {{ current_user.username }} !
+                        </span>
+                    </li>
+                    <li class="nav-item"><a class="nav-link btn btn-outline-light btn-sm" href="{{ url_for('main.logout') }}">Déconnexion</a></li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('main.login') }}">Connexion</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+                <li class="alert alert-{{ category if category in ['success', 'danger', 'warning', 'info'] else 'secondary' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    {% block page_content %}{% endblock %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {{ super() }} {# Conserve les scripts Bootstrap (jQuery, Popper, Bootstrap JS) #}
+    {# Si vous avez besoin de JS customisé, ajoutez-le ici #}
+{% endblock %}
